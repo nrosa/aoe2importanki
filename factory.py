@@ -153,11 +153,11 @@ class TechNoteSeriesFactory(TechNoteFactory):
     def _get_question_str(self, civ):
         return self.question.format(civ)
 
-    def _get_true_str(self, **kwargs):
+    def _get_pos_str(self, **kwargs):
         lang_id = self.data['data']['techs'][kwargs['tech_id']]['LanguageNameId']
         return self.strings[str(lang_id)]
     
-    def _get_false_str(self, **kwargs):
+    def _get_neg_str(self, **kwargs):
         return 'Not Available'
     
 
@@ -173,10 +173,10 @@ class TechNoteSingleFactory(TechNoteFactory):
             self.strings[str(tech_lang_id)],
         )
 
-    def _get_true_str(self, **kwargs):
+    def _get_pos_str(self, **kwargs):
         return 'Yes'
     
-    def _get_false_str(self, **kwargs):
+    def _get_neg_str(self, **kwargs):
         return 'No'    
         
 

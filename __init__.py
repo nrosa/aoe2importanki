@@ -35,8 +35,10 @@ def aoe2_run(col) -> None:
     pos = col.add_custom_undo_entry("import aoe2")
     for cfg in tech_note_series_cfgs:
         add_notes(TechNoteSeriesFactory, cfg, col)
+        col.merge_undo_entries(pos)
     for cfg in tech_note_single_cfgs:
         add_notes(TechNoteSingleFactory, cfg, col)
+        col.merge_undo_entries(pos)
 
     return  col.merge_undo_entries(pos)
     
