@@ -35,6 +35,11 @@ tech_note_series_cfgs = [
         'tag': 'infantryarmor',
     },
     {
+        'ids': [875, 716],
+        'question': 'What is the top Supplies-line upgrade available to the {0}?',
+        'tag': 'infantrycost',
+    },
+    {
         'ids': [75, 68, 67],
         'question': 'What is the top melee attack upgrade available to the {0}?',
         'tag': 'meleeattack',
@@ -157,4 +162,93 @@ tech_note_single_cfgs = [
         'ids': [194],
         'tag': 'wallstrength',
     },
+]
+
+unit_series_note_cfgs = [
+    {
+        'ids': [492, 24, 4],
+        'question': 'What is the top Archer-line unit available to the {0}?',
+        'tag': 'archerline',
+    },
+    {
+        'ids': [207, 330, 329, 1755],
+        'question': 'What is the top camel-line unit available to the {0}?',
+        'tag': 'camelline',
+    },
+    {
+        'ids': [691, 420],
+        'question': 'What is the top Cannon Galleon-line unit available to the {0}?',
+        'tag': 'cannonline',
+    },
+    {
+        'ids': [474, 39],
+        'question': 'What is the top Cavalry Archer-line unit available to the {0}?',
+        'tag': 'cavalryarcherline',
+    },
+    {
+        'ids': [528, 527, 1104],
+        'question': 'What is the top Demolition Raft-line unit available to the {0}?',
+        'tag': 'demoline',
+    },
+    {
+        'ids': [1134, 1132],
+        'question': 'What is the top Elephant-line unit available to the {0}?',
+        'tag': 'elephantline',
+    },
+    {
+        'ids': [875, 873],
+        'question': 'What is the top Elephant Archer-line unit available to the {0}?',
+        'tag': 'elephantarcherline',
+    },
+    {
+        'ids': [532, 529, 1103],
+        'question': 'What is the top Fire Galley-line unit available to the {0}?',
+        'tag': 'fireline',
+    },
+    {
+        'ids': [442, 21, 539],
+        'question': 'What is the top Gelley-line unit available to the {0}?',
+        'tag': 'galleyline',
+    },
+    {
+        'ids': [1813, 569, 283, 38],
+        'question': 'What is the top Knight-line unit available to the {0}?',
+        'tag': 'knightline',
+    },
+    {
+        'ids': [588, 550, 280],
+        'question': 'What is the top Mangonel-line unit available to the {0}?',
+        'tag': 'mangonelline',
+    },
+    {
+        'ids': [567, 473, 77, 75, 74],
+        'question': 'What is the top Militia-line unit available to the {0}?',
+        'tag': 'militialine',
+    },
+    {
+        'ids': [548, 422, 1258],
+        'question': 'What is the top Ram-line unit available to the {0}?',
+        'tag': 'ramline',
+    },
+    {
+        'ids': [542, 279],
+        'question': 'What is the top Scorpion-line unit available to the {0}?',
+        'tag': 'scorpionline',
+    },
+    {
+        'ids': [1707, 441, 546, 448],
+        'question': 'What is the top Scout-line unit available to the {0}?',
+        'tag': 'scoutline',
+    },
+    {
+        'ids': [1155, 6, 7],
+        'question': 'What is the top Skirmisher-line unit available to the {0}?',
+        'tag': 'skirmline',
+    },
+    {
+        'ids': [359, 358, 93],
+        'question': 'What is the top Spear-line unit available to the {0}?',
+        'tag': 'spearline',
+    },
+
 ]

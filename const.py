@@ -10,3 +10,11 @@ AOE2_REG_ID = 'ID'
 AOE2_REG_DESC = 'Description'
 
 AOE2_IMPORT_TAG = 'aoe2importtool'
+
+AOE2_LANG_HELP_ID = 'LanguageHelpId'
+AOE2_LANG_NAME_ID = 'LanguageNameId'
+
+# TODO track changes to notes
+AOE2_NOTE_STATE_NEW = 0
+AOE2_NOTE_STATE_MODIFIED = 1
+AOE2_NOTE_STATE_UNCHANGED = 2
