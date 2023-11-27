@@ -171,6 +171,11 @@ unit_series_note_cfgs = [
         'tag': 'archerline',
     },
     {
+        'ids': [1709, 36],
+        'question': 'What is the top Bombard Cannon-line unit available to the {0}?',
+        'tag': 'bombardline',
+    },
+    {
         'ids': [207, 330, 329, 1755],
         'question': 'What is the top camel-line unit available to the {0}?',
         'tag': 'camelline',
