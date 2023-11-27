@@ -88,39 +88,52 @@ class RegNoteFactory(NoteFactory):
         new_notes = []
         updated_notes = []
         for civ in self.civ_names:
-            note, new_flag = self.get_note_civ(civ)
-            if new_flag:
+            note, note_state = self.get_note_civ(civ)
+            if note_state == AOE2_NOTE_STATE_NEW:
                 new_notes.append(note)
-            else:
+            elif note_state == AOE2_NOTE_STATE_MODIFIED:
                 updated_notes.append(note)
+            elif note_state == AOE2_NOTE_STATE_UNCHANGED:
+                pass
+            else:
+                raise Exception('Undefined behaviour')
         return new_notes, updated_notes
     
     def get_note_civ(self, civ):
         # Check for existing note
         note_str_id = ' '.join([AOE2_IMPORT_TAG, self.tag, civ])
         nids = mw.col.find_notes(
-            mw.col.build_search_string(note_str_id, collection.SearchNode(field_name=AOE2_REG_ID))
+            mw.col.build_search_string(f'"{note_str_id}"', collection.SearchNode(field_name=AOE2_REG_ID))
         )
-        new_flag = False
+        note_state = AOE2_NOTE_STATE_UNCHANGED
         note = None
         if len(nids) == 0:
             note = mw.col.new_note(notetype=mw.col.models.get(self.reg_model_id))
-            new_flag = True
+            note_state = AOE2_NOTE_STATE_NEW
         elif len(nids) == 1:
             note = mw.col.get_note(nids[0])
         else:
             raise Exception(f'Muiltiple existing notes for ID {note_str_id} found.')
         
-        note[AOE2_REG_QUESTION] = self._get_question_str(civ)
-        note[AOE2_REG_ID] = note_str_id
-        note[AOE2_REG_ANSWER] = self._get_neg_str()
+        note_state = self._update_note_field(
+            note,
+            AOE2_REG_QUESTION,
+            self._get_question_str(civ),
+            note_state,
+        )
+        note_state = self._update_note_field(
+            note,
+            AOE2_REG_ID,
+            note_str_id,
+            note_state,
+        )
         
         # Add tags
         note.add_tag(AOE2_IMPORT_TAG)
         note.add_tag(self.tag)
         note.add_tag(civ)
 
-        return note, new_flag
+        return note, note_state
     
     def _get_question_str(self, civ):
         return ''
@@ -130,6 +143,14 @@ class RegNoteFactory(NoteFactory):
     
     def _get_neg_str(self, **kwargs):
         return ''
+    
+    def _update_note_field(self, note, field, value, note_state):
+        current_value = note[field]
+        if current_value != value:
+            note[field] = value
+            if note_state > AOE2_NOTE_STATE_MODIFIED:
+                note_state = AOE2_NOTE_STATE_MODIFIED
+        return note_state
 
 
 class TechTreeRegNoteFactory(RegNoteFactory):
@@ -145,15 +166,34 @@ class TechTreeRegNoteFactory(RegNoteFactory):
         self.tag = tag
 
     def get_note_civ(self, civ):
-        note, new_flag = super().get_note_civ(civ) 
+        note, note_state = super().get_note_civ(civ)
+        answer_set = False
         for data_id in self.ids:
             # Check if the civ receives tech
             if data_id in self._get_available_ids_for_civ(civ):
-                # note[AOE2_REG_ANSWER] = ['internal_name']
-                note[AOE2_REG_ANSWER] = self._get_pos_str(data_id=str(data_id))
-                note[AOE2_REG_DESC] = self._get_data_help_str(data_id)
+                note_state = self._update_note_field(
+                    note,
+                    AOE2_REG_ANSWER,
+                    self._get_pos_str(data_id=str(data_id)),
+                    note_state,
+                )
+                note_state = self._update_note_field(
+                    note,
+                    AOE2_REG_DESC,
+                    self._get_data_help_str(data_id),
+                    note_state,
+                )
+                answer_set = True
                 break
-        return note, new_flag
+        
+        if not answer_set:
+            note_state = self._update_note_field(
+                note,
+                AOE2_REG_ANSWER,
+                self._get_neg_str(),
+                note_state,
+            )
+        return note, note_state
 
 
 class TechNoteFactory(TechTreeRegNoteFactory):
