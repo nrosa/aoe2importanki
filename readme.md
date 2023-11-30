@@ -1,10 +1,12 @@
 # A tool for automatically importing flash cards about aoe2 into anki
 
+This is currently a work in progress.
+
 ## Card Types
 - [x] Techs
 - [x] Standard units
 - [] Tech/Unit cloze
-- [] Civ bonuses
+- [x] Civ bonuses
 - [] Unique units
 
 ## TODO
