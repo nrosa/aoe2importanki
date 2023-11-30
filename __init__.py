@@ -5,7 +5,7 @@ from aqt.utils import showInfo, qconnect
 # import all of the Qt GUI library
 from aqt.qt import *
 
-from .factory import *
+from .note_factory import *
 from .const import *
 from .notes import *
 
@@ -33,15 +33,21 @@ def add_notes(factory_class, cfg, col):
 
 def aoe2_run(col) -> None:
     pos = col.add_custom_undo_entry("import aoe2")
-    for cfg in tech_note_series_cfgs:
-        add_notes(TechSeriesNoteFactory, cfg, col)
-        col.merge_undo_entries(pos)
-    for cfg in tech_note_single_cfgs:
-        add_notes(TechSingleNoteFactory, cfg, col)
-        col.merge_undo_entries(pos)
-    for cfg in unit_series_note_cfgs:
-        add_notes(UnitSeriesNoteFactory, cfg, col)
-        col.merge_undo_entries(pos)
+    # for cfg in tech_note_series_cfgs:
+    #     add_notes(TechSeriesNoteFactory, cfg, col)
+    #     col.merge_undo_entries(pos)
+    # for cfg in tech_note_single_cfgs:
+    #     add_notes(TechSingleNoteFactory, cfg, col)
+    #     col.merge_undo_entries(pos)
+    # for cfg in unit_series_note_cfgs:
+    #     add_notes(UnitSeriesNoteFactory, cfg, col)
+    #     col.merge_undo_entries(pos)
+
+    # add_notes(CivBonusNoteFactory, {}, col)
+    # factory = CivBonusNoteFactory()
+    # test = factory.get_note_civ('Armenians')
+    # # test = factory.get_notes()
+
 
     return  col.merge_undo_entries(pos)
     

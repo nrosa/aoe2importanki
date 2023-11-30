@@ -3,6 +3,7 @@
 ## Card Types
 - [x] Techs
 - [x] Standard units
+- [] Tech/Unit cloze
 - [] Civ bonuses
 - [] Unique units
 
@@ -13,5 +14,5 @@
 - Add buildings to cards for techs and units
 - Add ages when unit-line or tech is available to cards
 - Add a welcome card
-
+- Add a config factory instead of hardcoded configs
 - Create the notetypes on run if they don't exist
