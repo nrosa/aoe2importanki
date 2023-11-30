@@ -46,12 +46,6 @@ def aoe2_run(col) -> None:
     add_notes(CivBonusNoteFactory, {}, col)
 
     return  col.merge_undo_entries(pos)
-    
-    
-    
-    # cardCount = mw.col.cardCount()
-    # showInfo("Card count: %d" % cardCount)
-
 
 
 # create a new menu item, "test"
