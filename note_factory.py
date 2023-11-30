@@ -299,7 +299,12 @@ class CivBonusNoteFactory(ClozeNoteFactory):
     def _get_text_str(self, civ):
         civ_help_id = self.data[AOE2_CIV_HELP][str(civ)]
         bonuses, team_bonuses = self._get_civ_bonuses(self._get_string(civ_help_id))
-        print(bonuses)
+        text = '<b>{0}</b><br>'.format(civ)
+        for i in range(len(bonuses)):
+            text += u'\u2022 {{{{c{0}::{1}}}}}<br>\n'.format(i+1, bonuses[i]) 
+
+        for i in range(len(team_bonuses)):
+            text += u'\u2022 <b>Team Bonus</b> {{{{c{0}::{1}}}}}<br>\n'.format(i+1+len(bonuses), team_bonuses[i]) 
         
-        return ''
+        return text
     
