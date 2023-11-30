@@ -18,3 +18,4 @@ This is currently a work in progress.
 - Add a welcome card
 - Add a config factory instead of hardcoded configs
 - Create the notetypes on run if they don't exist
+- Support multiple locales
