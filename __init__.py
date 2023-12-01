@@ -25,6 +25,7 @@ def aoe2_on_success(args) -> None:
 
 def add_notes(factory_class, cfg, col):
     factory = factory_class(
+        path=__path__[0],
         **cfg
     )
     new_notes, updated_notes = factory.get_notes()

@@ -21,3 +21,6 @@ AOE2_CIV_HELP = 'civ_helptexts'
 AOE2_NOTE_STATE_NEW = 0
 AOE2_NOTE_STATE_MODIFIED = 1
 AOE2_NOTE_STATE_UNCHANGED = 2
+
+AOE2_DATA = 'aoe2techtree/data/data.json'
+AOE2_STRINGS = 'aoe2techtree/data/locales/en/strings.json'

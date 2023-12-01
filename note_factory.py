@@ -13,8 +13,8 @@ from .factory import Factory
 class NoteFactory(Factory, metaclass=ABCMeta):
     """
     """
-    def __init__(self):
-        super().__init__()
+    def __init__(self, path):
+        super().__init__(path)
 
         self.init_decks()
         self.init_notetypes()
@@ -118,8 +118,8 @@ class NoteFactory(Factory, metaclass=ABCMeta):
         return note, note_state
 
 class RegNoteFactory(NoteFactory, metaclass=ABCMeta):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, path):
+        super().__init__(path)
     
     def get_note_civ(self, civ):
         note, note_state = self._get_note(self._get_id_str(civ), self.reg_model_id)
@@ -150,8 +150,9 @@ class TechTreeRegNoteFactory(RegNoteFactory):
             ids: list[int],
             question: str,
             tag: str,
+            path: str,
         ):
-        super(TechTreeRegNoteFactory, self).__init__()
+        super(TechTreeRegNoteFactory, self).__init__(path)
         self.deck_id = self.techtree_deck_id
         self.ids = ids
         self.question = question
@@ -194,13 +195,14 @@ class TechNoteFactory(TechTreeRegNoteFactory):
             ids: list[int],
             question: str,
             tag: str,
+            path: str,
         ):
-        super(TechNoteFactory, self).__init__(ids, question, tag)
+        super(TechNoteFactory, self).__init__(ids, question, tag, path)
         self.data_key = 'tech'
 
 class TechSeriesNoteFactory(TechNoteFactory):
-    def __init__(self, ids: list[int], question: str, tag: str):
-        super().__init__(ids, question, tag) 
+    def __init__(self, ids: list[int], question: str, tag: str, path: str):
+        super().__init__(ids, question, tag, path) 
 
     def _get_question_str(self, civ):
         return self.question.format(civ)
@@ -213,9 +215,9 @@ class TechSeriesNoteFactory(TechNoteFactory):
     
 
 class TechSingleNoteFactory(TechNoteFactory):
-    def __init__(self, ids: list[int], tag: str):
+    def __init__(self, ids: list[int], tag: str, path: str):
         question = 'Do {0} get {1}?'
-        super().__init__(ids, question, tag) 
+        super().__init__(ids, question, tag, path) 
 
     def _get_question_str(self, civ):
         return self.question.format(
@@ -235,8 +237,9 @@ class UnitNoteFactory(TechTreeRegNoteFactory):
             ids: list[int],
             question: str,
             tag: str,
+            path: str,
         ):
-        super(UnitNoteFactory, self).__init__(ids, question, tag)
+        super(UnitNoteFactory, self).__init__(ids, question, tag, path)
         self.data_key = 'unit'
 
 
@@ -245,8 +248,9 @@ class UnitSeriesNoteFactory(UnitNoteFactory):
             ids: list[int],
             question: str,
             tag: str,
+            path: str,
         ):
-        super().__init__(ids, question, tag)
+        super().__init__(ids, question, tag, path)
 
     def _get_question_str(self, civ):
         return self.question.format(civ)
@@ -258,8 +262,8 @@ class UnitSeriesNoteFactory(UnitNoteFactory):
         return 'Not Available'
     
 class ClozeNoteFactory(NoteFactory, metaclass=ABCMeta):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, path: str):
+        super().__init__(path)
 
     def get_note_civ(self, civ):
         note, note_state = super()._get_note(civ, self.cloze_model_id)
@@ -279,8 +283,8 @@ class ClozeNoteFactory(NoteFactory, metaclass=ABCMeta):
     
     
 class CivBonusNoteFactory(ClozeNoteFactory):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, path: str):
+        super().__init__(path)
         self.deck_id = self.techtree_deck_id
         self.tag = 'civbonus'
 
