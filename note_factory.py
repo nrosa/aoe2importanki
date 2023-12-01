@@ -122,7 +122,7 @@ class RegNoteFactory(NoteFactory, metaclass=ABCMeta):
         super().__init__(path)
     
     def get_note_civ(self, civ):
-        note, note_state = self._get_note(self._get_id_str(civ), self.reg_model_id)
+        note, note_state = self._get_note(civ, self.reg_model_id)
         note_state = self._update_note_field(
             note,
             AOE2_REG_QUESTION,
