@@ -8,6 +8,9 @@ from aqt import mw
 
 from .const import *
 from .factory import Factory
+
+import xml.etree.ElementTree as ET
+import re
         
 
 class NoteFactory(Factory, metaclass=ABCMeta):
@@ -260,7 +263,8 @@ class UnitSeriesNoteFactory(UnitNoteFactory):
     
     def _get_neg_str(self, **kwargs):
         return 'Not Available'
-    
+
+
 class UnitSingleNoteFactory(UnitNoteFactory):
     def __init__(self, ids: list[int], tag: str, path: str):
         question = 'Do {0} get {1}?'
@@ -281,6 +285,11 @@ class UnitSingleNoteFactory(UnitNoteFactory):
 class ClozeNoteFactory(NoteFactory, metaclass=ABCMeta):
     def __init__(self, path: str):
         super().__init__(path)
+        self.cloze_cnt = 0
+
+    def _get_cloze(self, str):
+        self.cloze_cnt += 1
+        return '{{{{c{0}::{1}}}}}'.format(self.cloze_cnt, str)
 
     def get_note_civ(self, civ):
         note, note_state = super()._get_note(civ, self.cloze_model_id)
@@ -292,7 +301,6 @@ class ClozeNoteFactory(NoteFactory, metaclass=ABCMeta):
             note_state,
         )
         return note, note_state
-        
     
     @abstractmethod
     def _get_text_str(self, civ):
@@ -316,16 +324,64 @@ class CivBonusNoteFactory(ClozeNoteFactory):
         assert(uu_idx is not None and ut_idx is not None and tb_idx is not None)
 
         return bonus_strs[1:uu_idx], bonus_strs[tb_idx+1:]
+    
+    def _build_html(self, civ, bonuses, team_bonuses):
+        builder = ET.TreeBuilder()
+        builder.start('div', {'class':civ})
+        builder.start('span', {'class':civ})
+        builder.data(civ)
+        builder.start('br', {})
+        builder.start('ol', {})
+        for bonus in bonuses:
+            self._build_bonus_elem(builder, bonus, team_bonus=False)
+        for bonus in team_bonuses:
+            self._build_bonus_elem(builder, bonus, team_bonus=True)
+        builder.end('ol')
+        builder.end('div')
+
+        return ET.tostring(builder.close(), encoding='unicode', method='html')
+    
+    def _build_bonus_elem(self, builder, bonus, team_bonus=False):
+        builder.start('li', {})
+        self._add_digit_styling(builder, bonus)
+        if team_bonus:
+            builder.start('span', {'class': 'teambonus'})
+            builder.data(' (team bonus)')
+            builder.end('span')
+        builder.end('li')
+    
+    def _add_digit_styling(self, builder, html_str):
+        pattern = r'((?<!c)-?\d+%?)'
+        for segment in re.split(pattern, html_str):
+            if re.fullmatch(pattern, segment):
+                if segment[-1] == '%':
+                    self._wrap_percent(builder, segment)
+                else:
+                    self._wrap_number(builder, segment)
+            else:
+                builder.data(segment)
+
+    def _wrap_percent(self, builder, html_str):
+        self._wrap_with_span(builder, html_str, 'percentage')
+
+    def _wrap_number(self, builder, html_str):
+        self._wrap_with_span(builder, html_str, 'number')
+    
+    def _wrap_with_span(self, builder, html_str, klass):
+        builder.start('span', {'class': klass})
+        builder.data(html_str)
+        builder.end('span')        
 
     def _get_text_str(self, civ):
         civ_help_id = self.data[AOE2_CIV_HELP][str(civ)]
         bonuses, team_bonuses = self._get_civ_bonuses(self._get_string(civ_help_id))
-        text = '<b>{0}</b><br>'.format(civ)
-        for i in range(len(bonuses)):
-            text += u'\u2022 {{{{c{0}::{1}}}}}<br>\n'.format(i+1, bonuses[i]) 
+        text = self._build_html(
+            civ,
+            [self._get_cloze(x) for x in bonuses],
+            [self._get_cloze(x) for x in team_bonuses],
+        )
 
-        for i in range(len(team_bonuses)):
-            text += u'\u2022 <b>Team Bonus</b> {{{{c{0}::{1}}}}}<br>\n'.format(i+1+len(bonuses), team_bonuses[i]) 
-        
+        print(text)
+
         return text
     
