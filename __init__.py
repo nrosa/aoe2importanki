@@ -34,6 +34,7 @@ def add_notes(factory_class, cfg, col):
 
 def aoe2_run(col) -> None:
     pos = col.add_custom_undo_entry("import aoe2")
+
     for cfg in tech_note_series_cfgs:
         add_notes(TechSeriesNoteFactory, cfg, col)
         col.merge_undo_entries(pos)
@@ -42,6 +43,9 @@ def aoe2_run(col) -> None:
         col.merge_undo_entries(pos)
     for cfg in unit_series_note_cfgs:
         add_notes(UnitSeriesNoteFactory, cfg, col)
+        col.merge_undo_entries(pos)
+    for cfg in unit_single_note_cfgs:
+        add_notes(UnitSingleNoteFactory, cfg, col)
         col.merge_undo_entries(pos)
 
     add_notes(CivBonusNoteFactory, {}, col)

@@ -261,6 +261,23 @@ class UnitSeriesNoteFactory(UnitNoteFactory):
     def _get_neg_str(self, **kwargs):
         return 'Not Available'
     
+class UnitSingleNoteFactory(UnitNoteFactory):
+    def __init__(self, ids: list[int], tag: str, path: str):
+        question = 'Do {0} get {1}?'
+        super().__init__(ids, question, tag, path) 
+
+    def _get_question_str(self, civ):
+        return self.question.format(
+            civ,
+            self._get_data_name_str(self.ids[0]),
+        )
+
+    def _get_pos_str(self, **kwargs):
+        return 'Yes'
+    
+    def _get_neg_str(self, **kwargs):
+        return 'No'   
+    
 class ClozeNoteFactory(NoteFactory, metaclass=ABCMeta):
     def __init__(self, path: str):
         super().__init__(path)
