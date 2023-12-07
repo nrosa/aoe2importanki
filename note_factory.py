@@ -381,7 +381,5 @@ class CivBonusNoteFactory(ClozeNoteFactory):
             [self._get_cloze(x) for x in team_bonuses],
         )
 
-        print(text)
-
         return text
     
