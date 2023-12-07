@@ -119,6 +119,38 @@ class NoteFactory(Factory, metaclass=ABCMeta):
         note.add_tag(self.tag)
         
         return note, note_state
+    
+    def _add_digit_styling(self, builder, html_str):
+        pattern = r'((?<!c)-?\d+%?)'
+        for segment in re.split(pattern, html_str):
+            if re.fullmatch(pattern, segment):
+                if segment[-1] == '%':
+                    self._wrap_percent(builder, segment)
+                else:
+                    self._wrap_number(builder, segment)
+            else:
+                builder.data(segment)
+
+    def _wrap_percent(self, builder, html_str):
+        self._wrap_with_span(builder, html_str, 'percentage')
+
+    def _wrap_number(self, builder, html_str):
+        self._wrap_with_span(builder, html_str, 'number')
+    
+    def _wrap_with_span(self, builder, html_str, klass):
+        builder.start('span', {'class': klass})
+        builder.data(html_str)
+        builder.end('span')
+
+    def str_2_html_str(self, input_str):
+        builder = ET.TreeBuilder()
+        self._add_digit_styling(input_str, builder)
+        return self._builder_2_str(builder)
+
+    def _builder_2_str(self, builder):
+        return ET.tostring(builder.close(), encoding='unicode', method='html')
+
+
 
 class RegNoteFactory(NoteFactory, metaclass=ABCMeta):
     def __init__(self, path):
@@ -176,7 +208,7 @@ class TechTreeRegNoteFactory(RegNoteFactory):
                 note_state = self._update_note_field(
                     note,
                     AOE2_REG_DESC,
-                    self._get_data_help_str(data_id),
+                    self.str_2_html_str(self._get_data_help_str(data_id)),
                     note_state,
                 )
                 answer_set = True
@@ -339,7 +371,7 @@ class CivBonusNoteFactory(ClozeNoteFactory):
         builder.end('ol')
         builder.end('div')
 
-        return ET.tostring(builder.close(), encoding='unicode', method='html')
+        return self._builder_2_str(builder)
     
     def _build_bonus_elem(self, builder, bonus, team_bonus=False):
         builder.start('li', {})
@@ -349,28 +381,7 @@ class CivBonusNoteFactory(ClozeNoteFactory):
             builder.data(' (team bonus)')
             builder.end('span')
         builder.end('li')
-    
-    def _add_digit_styling(self, builder, html_str):
-        pattern = r'((?<!c)-?\d+%?)'
-        for segment in re.split(pattern, html_str):
-            if re.fullmatch(pattern, segment):
-                if segment[-1] == '%':
-                    self._wrap_percent(builder, segment)
-                else:
-                    self._wrap_number(builder, segment)
-            else:
-                builder.data(segment)
 
-    def _wrap_percent(self, builder, html_str):
-        self._wrap_with_span(builder, html_str, 'percentage')
-
-    def _wrap_number(self, builder, html_str):
-        self._wrap_with_span(builder, html_str, 'number')
-    
-    def _wrap_with_span(self, builder, html_str, klass):
-        builder.start('span', {'class': klass})
-        builder.data(html_str)
-        builder.end('span')        
 
     def _get_text_str(self, civ):
         civ_help_id = self.data[AOE2_CIV_HELP][str(civ)]
