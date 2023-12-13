@@ -19,6 +19,11 @@ tech_note_series_cfgs = [
         'question': 'What is the top cavalry armor upgrade available to the {0}?',
         'tag': 'cavalryarmor',
     },
+        {
+        'ids': [45, 46],
+        'question': 'What is the top devotion line upgrade available to the {0}?',
+        'tag': 'conversionresist',
+    },
     {
         'ids': [12, 13, 14],
         'question': 'What is the top farm upgrade available to the {0}?',
@@ -85,10 +90,6 @@ tech_note_single_cfgs = [
     {
         'ids': [39],
         'tag': 'cavalryspeed',
-    },
-    {
-        'ids': [45],
-        'tag': 'conversionresist',
     },
     {
         'ids': [441],

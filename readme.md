@@ -2,6 +2,8 @@
 
 This is currently a work in progress.
 
+Current for Update 99311
+
 ## Card Types
 - [x] Techs
 - [x] Standard units
