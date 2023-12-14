@@ -121,42 +121,57 @@ class NoteFactory(Factory, metaclass=ABCMeta):
         
         return note, note_state
     
+    def _get_new_elems_for_styling(self, text):
+        new_subelems = []
+        pattern = r'((?<!c)[+-]?\d+%?)'
+        new_text = ''
+        for segment in re.split(pattern, text):
+            if re.fullmatch(pattern, segment):
+                if segment[-1] == '%':
+                    subelem = self._wrap_percent(segment)
+                else:
+                    subelem = self._wrap_number(segment)
+                new_subelems.append(subelem)
+            else:
+                if len(new_subelems) == 0:
+                    new_text += segment
+                else:
+                    if new_subelems[-1].tail is None:
+                        new_subelems[-1].tail = segment
+                    else:
+                        new_subelems[-1].tail += segment
+        return new_subelems, new_text
+    
     '''
     Takes an ET element and adds digit styling to all the contained text
     Recursive
     '''
-    def _add_digit_styling(self, element):
+    def _add_digit_styling(self, element, parent=None, parent_idx=None):
         # Process the text in this element
         new_subelems = []
+        new_parent_tail_elems = []
         if element.text is not None:
-            pattern = r'((?<!c)[+-]?\d+%?)'
-            temptext = element.text
-            element.text = ''
-            for segment in re.split(pattern, temptext):
-                if re.fullmatch(pattern, segment):
-                    if segment[-1] == '%':
-                        subelem = self._wrap_percent(segment)
-                    else:
-                        subelem = self._wrap_number(segment)
-                    new_subelems.append(subelem)
-                else:
-                    if len(new_subelems) == 0:
-                        element.text += segment
-                    else:
-                        if new_subelems[-1].tail is None:
-                            new_subelems[-1].tail = segment
-                        else:
-                            new_subelems[-1].tail += segment
+            new_subelems, element.text = self._get_new_elems_for_styling(element.text)
+        if element.tail is not None:
+            new_parent_tail_elems, element.tail = self._get_new_elems_for_styling(element.tail)
 
 
         # Process the subelements
-        for subelem in element:
-            self._add_digit_styling(subelem)
+        i = 0 
+        while i < len(element):
+            new_tail_elems = self._add_digit_styling(element[i], parent=element, parent_idx=i)
+            for new_tail_elem in new_tail_elems:
+                i += 1
+                element.insert(i, new_tail_elem)
+            i += 1
 
         # Add the new subelems
         new_subelems.reverse()
         for new_elem in new_subelems:
             element.insert(0, new_elem)
+
+        return new_parent_tail_elems
+
 
 
         
@@ -173,7 +188,7 @@ class NoteFactory(Factory, metaclass=ABCMeta):
         return element
 
     def str_2_html_str(self, input_str):
-        element = fromstring(input_str)
+        element = fromstring(input_str, encoding='unicode')
         return self._element_2_str(element)
 
     # Element to str
