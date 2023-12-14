@@ -25,3 +25,5 @@ Current for Update 99311
 - [ ] Add a config factory instead of hardcoded configs
 - [ ] Create the notetypes on run if they don't exist
 - [ ] Support multiple locales
+
+https://trello.com/b/aovkOOW5/aoe2-anki-tool
