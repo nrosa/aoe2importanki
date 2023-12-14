@@ -8,6 +8,7 @@ from aqt import mw
 
 from .const import *
 from .factory import Factory
+from .htmlement import fromstring
 
 import xml.etree.ElementTree as ET
 import re
@@ -120,35 +121,65 @@ class NoteFactory(Factory, metaclass=ABCMeta):
         
         return note, note_state
     
-    def _add_digit_styling(self, builder, html_str):
-        pattern = r'((?<!c)-?\d+%?)'
-        for segment in re.split(pattern, html_str):
-            if re.fullmatch(pattern, segment):
-                if segment[-1] == '%':
-                    self._wrap_percent(builder, segment)
+    '''
+    Takes an ET element and adds digit styling to all the contained text
+    Recursive
+    '''
+    def _add_digit_styling(self, element):
+        # Process the text in this element
+        new_subelems = []
+        if element.text is not None:
+            pattern = r'((?<!c)[+-]?\d+%?)'
+            temptext = element.text
+            element.text = ''
+            for segment in re.split(pattern, temptext):
+                if re.fullmatch(pattern, segment):
+                    if segment[-1] == '%':
+                        subelem = self._wrap_percent(segment)
+                    else:
+                        subelem = self._wrap_number(segment)
+                    new_subelems.append(subelem)
                 else:
-                    self._wrap_number(builder, segment)
-            else:
-                builder.data(segment)
+                    if len(new_subelems) == 0:
+                        element.text += segment
+                    else:
+                        if new_subelems[-1].tail is None:
+                            new_subelems[-1].tail = segment
+                        else:
+                            new_subelems[-1].tail += segment
 
-    def _wrap_percent(self, builder, html_str):
-        self._wrap_with_span(builder, html_str, 'percentage')
 
-    def _wrap_number(self, builder, html_str):
-        self._wrap_with_span(builder, html_str, 'number')
+        # Process the subelements
+        for subelem in element:
+            self._add_digit_styling(subelem)
+
+        # Add the new subelems
+        new_subelems.reverse()
+        for new_elem in new_subelems:
+            element.insert(0, new_elem)
+
+
+        
+
+    def _wrap_percent(self, text):
+        return self._wrap_with_span(text, 'percentage')
+
+    def _wrap_number(self, text):
+        return self._wrap_with_span(text, 'number')
     
-    def _wrap_with_span(self, builder, html_str, klass):
-        builder.start('span', {'class': klass})
-        builder.data(html_str)
-        builder.end('span')
+    def _wrap_with_span(self, text, klass):
+        element = ET.Element('span', {'class': klass})
+        element.text = text
+        return element
 
     def str_2_html_str(self, input_str):
-        builder = ET.TreeBuilder()
-        self._add_digit_styling(input_str, builder)
-        return self._builder_2_str(builder)
+        element = fromstring(input_str)
+        return self._element_2_str(element)
 
-    def _builder_2_str(self, builder):
-        return ET.tostring(builder.close(), encoding='unicode', method='html')
+    # Element to str
+    def _element_2_str(self, element):
+        self._add_digit_styling(element)
+        return ET.tostring(element, encoding='unicode', method='html')
 
 
 
@@ -322,8 +353,12 @@ class ClozeNoteFactory(NoteFactory, metaclass=ABCMeta):
     def _get_cloze(self, str):
         self.cloze_cnt += 1
         return '{{{{c{0}::{1}}}}}'.format(self.cloze_cnt, str)
+    
+    def _reset_cloze(self):
+        self.cloze_cnt = 0
 
     def get_note_civ(self, civ):
+        self._reset_cloze()
         note, note_state = super()._get_note(civ, self.cloze_model_id)
             
         note_state = self._update_note_field(
@@ -371,11 +406,11 @@ class CivBonusNoteFactory(ClozeNoteFactory):
         builder.end('ol')
         builder.end('div')
 
-        return self._builder_2_str(builder)
+        return self._element_2_str(builder.close())
     
     def _build_bonus_elem(self, builder, bonus, team_bonus=False):
         builder.start('li', {})
-        self._add_digit_styling(builder, bonus)
+        builder.data(bonus)
         if team_bonus:
             builder.start('span', {'class': 'teambonus'})
             builder.data(' (team bonus)')
