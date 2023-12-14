@@ -171,9 +171,6 @@ class NoteFactory(Factory, metaclass=ABCMeta):
             element.insert(0, new_elem)
 
         return new_parent_tail_elems
-
-
-
         
 
     def _wrap_percent(self, text):
@@ -254,7 +251,7 @@ class TechTreeRegNoteFactory(RegNoteFactory):
                 note_state = self._update_note_field(
                     note,
                     AOE2_REG_DESC,
-                    self.str_2_html_str(self._get_data_help_str(data_id)),
+                    self.str_2_html_str(self._get_data_help_str(data_id).split('<br>')[1]),
                     note_state,
                 )
                 answer_set = True
