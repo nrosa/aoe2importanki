@@ -8,6 +8,10 @@ from aqt import mw
 
 from .const import *
 from .factory import Factory
+from .htmlement import fromstring
+
+import xml.etree.ElementTree as ET
+import re
         
 
 class NoteFactory(Factory, metaclass=ABCMeta):
@@ -116,6 +120,80 @@ class NoteFactory(Factory, metaclass=ABCMeta):
         note.add_tag(self.tag)
         
         return note, note_state
+    
+    def _get_new_elems_for_styling(self, text):
+        new_subelems = []
+        pattern = r'((?<!c)[+-]?\d+%?)'
+        new_text = ''
+        for segment in re.split(pattern, text):
+            if re.fullmatch(pattern, segment):
+                if segment[-1] == '%':
+                    subelem = self._wrap_percent(segment)
+                else:
+                    subelem = self._wrap_number(segment)
+                new_subelems.append(subelem)
+            else:
+                if len(new_subelems) == 0:
+                    new_text += segment
+                else:
+                    if new_subelems[-1].tail is None:
+                        new_subelems[-1].tail = segment
+                    else:
+                        new_subelems[-1].tail += segment
+        return new_subelems, new_text
+    
+    '''
+    Takes an ET element and adds digit styling to all the contained text
+    Recursive
+    '''
+    def _add_digit_styling(self, element, parent=None, parent_idx=None):
+        # Process the text in this element
+        new_subelems = []
+        new_parent_tail_elems = []
+        if element.text is not None:
+            new_subelems, element.text = self._get_new_elems_for_styling(element.text)
+        if element.tail is not None:
+            new_parent_tail_elems, element.tail = self._get_new_elems_for_styling(element.tail)
+
+
+        # Process the subelements
+        i = 0 
+        while i < len(element):
+            new_tail_elems = self._add_digit_styling(element[i], parent=element, parent_idx=i)
+            for new_tail_elem in new_tail_elems:
+                i += 1
+                element.insert(i, new_tail_elem)
+            i += 1
+
+        # Add the new subelems
+        new_subelems.reverse()
+        for new_elem in new_subelems:
+            element.insert(0, new_elem)
+
+        return new_parent_tail_elems
+        
+
+    def _wrap_percent(self, text):
+        return self._wrap_with_span(text, 'percentage')
+
+    def _wrap_number(self, text):
+        return self._wrap_with_span(text, 'number')
+    
+    def _wrap_with_span(self, text, klass):
+        element = ET.Element('span', {'class': klass})
+        element.text = text
+        return element
+
+    def str_2_html_str(self, input_str):
+        element = fromstring(input_str, encoding='unicode')
+        return self._element_2_str(element)
+
+    # Element to str
+    def _element_2_str(self, element):
+        self._add_digit_styling(element)
+        return ET.tostring(element, encoding='unicode', method='html')
+
+
 
 class RegNoteFactory(NoteFactory, metaclass=ABCMeta):
     def __init__(self, path):
@@ -173,7 +251,7 @@ class TechTreeRegNoteFactory(RegNoteFactory):
                 note_state = self._update_note_field(
                     note,
                     AOE2_REG_DESC,
-                    self._get_data_help_str(data_id),
+                    self.str_2_html_str(self._get_data_help_str(data_id).split('<br>')[1]),
                     note_state,
                 )
                 answer_set = True
@@ -260,12 +338,39 @@ class UnitSeriesNoteFactory(UnitNoteFactory):
     
     def _get_neg_str(self, **kwargs):
         return 'Not Available'
+
+
+class UnitSingleNoteFactory(UnitNoteFactory):
+    def __init__(self, ids: list[int], tag: str, path: str):
+        question = 'Do {0} get {1}?'
+        super().__init__(ids, question, tag, path) 
+
+    def _get_question_str(self, civ):
+        return self.question.format(
+            civ,
+            self._get_data_name_str(self.ids[0]),
+        )
+
+    def _get_pos_str(self, **kwargs):
+        return 'Yes'
+    
+    def _get_neg_str(self, **kwargs):
+        return 'No'   
     
 class ClozeNoteFactory(NoteFactory, metaclass=ABCMeta):
     def __init__(self, path: str):
         super().__init__(path)
+        self.cloze_cnt = 0
+
+    def _get_cloze(self, str):
+        self.cloze_cnt += 1
+        return '{{{{c{0}::{1}}}}}'.format(self.cloze_cnt, str)
+    
+    def _reset_cloze(self):
+        self.cloze_cnt = 0
 
     def get_note_civ(self, civ):
+        self._reset_cloze()
         note, note_state = super()._get_note(civ, self.cloze_model_id)
             
         note_state = self._update_note_field(
@@ -275,7 +380,6 @@ class ClozeNoteFactory(NoteFactory, metaclass=ABCMeta):
             note_state,
         )
         return note, note_state
-        
     
     @abstractmethod
     def _get_text_str(self, civ):
@@ -299,16 +403,41 @@ class CivBonusNoteFactory(ClozeNoteFactory):
         assert(uu_idx is not None and ut_idx is not None and tb_idx is not None)
 
         return bonus_strs[1:uu_idx], bonus_strs[tb_idx+1:]
+    
+    def _build_html(self, civ, bonuses, team_bonuses):
+        builder = ET.TreeBuilder()
+        builder.start('div', {'class':civ})
+        builder.start('span', {'class':civ})
+        builder.data(civ)
+        builder.start('br', {})
+        builder.start('ol', {})
+        for bonus in bonuses:
+            self._build_bonus_elem(builder, bonus, team_bonus=False)
+        for bonus in team_bonuses:
+            self._build_bonus_elem(builder, bonus, team_bonus=True)
+        builder.end('ol')
+        builder.end('div')
+
+        return self._element_2_str(builder.close())
+    
+    def _build_bonus_elem(self, builder, bonus, team_bonus=False):
+        builder.start('li', {})
+        builder.data(bonus)
+        if team_bonus:
+            builder.start('span', {'class': 'teambonus'})
+            builder.data(' (team bonus)')
+            builder.end('span')
+        builder.end('li')
+
 
     def _get_text_str(self, civ):
         civ_help_id = self.data[AOE2_CIV_HELP][str(civ)]
         bonuses, team_bonuses = self._get_civ_bonuses(self._get_string(civ_help_id))
-        text = '<b>{0}</b><br>'.format(civ)
-        for i in range(len(bonuses)):
-            text += u'\u2022 {{{{c{0}::{1}}}}}<br>\n'.format(i+1, bonuses[i]) 
+        text = self._build_html(
+            civ,
+            [self._get_cloze(x) for x in bonuses],
+            [self._get_cloze(x) for x in team_bonuses],
+        )
 
-        for i in range(len(team_bonuses)):
-            text += u'\u2022 <b>Team Bonus</b> {{{{c{0}::{1}}}}}<br>\n'.format(i+1+len(bonuses), team_bonuses[i]) 
-        
         return text
     

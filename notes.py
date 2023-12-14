@@ -256,5 +256,16 @@ unit_series_note_cfgs = [
         'question': 'What is the top Spear-line unit available to the {0}?',
         'tag': 'spearline',
     },
+]
 
+unit_single_note_cfgs = [
+    {
+        'ids': [5],
+        'tag': 'handcannon',
+    },
+    {
+        'ids': [1795],
+        'tag': 'dromon',
+    },
+    
 ]
