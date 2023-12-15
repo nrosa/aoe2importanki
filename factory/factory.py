@@ -1,5 +1,10 @@
 import json, os
-from .const import AOE2_DATA, AOE2_STRINGS
+
+class DataPath(object):
+    data = 'aoe2techtree/data/data.json'
+    strings = 'aoe2techtree/data/locales/en/strings.json'
+
+
 
 class Factory(object):
     _data = None
@@ -8,14 +13,14 @@ class Factory(object):
     @classmethod
     def _get_data(cls, path):
         if cls._data is None:
-            with open(os.path.join(path,AOE2_DATA)) as fp:
+            with open(os.path.join(path, DataPath.data)) as fp:
                 cls._data = json.load(fp)
         return cls._data
 
     @classmethod
     def _get_strings(cls, path):
         if cls._strings is None:
-            with open(os.path.join(path,AOE2_STRINGS)) as fp:
+            with open(os.path.join(path, DataPath.strings)) as fp:
                 cls._strings = json.load(fp)
         return cls._strings
 
@@ -23,4 +28,5 @@ class Factory(object):
         super(Factory, self).__init__()
         self.data = Factory._get_data(path)
         self.strings = Factory._get_strings(path)
+        # TODO remove hc string
         self.civ_names = self.data['civ_names'].keys()

@@ -1,18 +1,35 @@
 from abc import ABCMeta, abstractmethod
 import re
+import xml.etree.ElementTree as ET
 
 from anki import collection, notes, models, importing, exporting
 
 from aqt.utils import showInfo
 from aqt import mw
 
-from .const import *
 from .factory import Factory
-from .htmlement import fromstring
+from .htmlement.htmlement import fromstring
+from .decks import TechTreeDeck
 
-import xml.etree.ElementTree as ET
-import re
-        
+
+class NoteState(object):
+    new = 0
+    modified = 1
+    unchanged = 2 
+
+class StringsKey(object):
+    help = 'LanguageHelpId'
+    name = 'LanguageNameId'
+
+# TODO remove
+AOE2_ID = 'ID'
+AOE2_REG_QUESTION = 'Question'
+AOE2_REG_ANSWER = 'Answer'
+AOE2_REG_DESC = 'Description'
+AOE2_CLOZE_TEXT = 'Text'
+AOE2_CIV_HELP = 'civ_helptexts'
+AOE2_REG_NOTE = 'Age of Empires 2 Regular'
+AOE2_CLOZE_NOTE = 'Age of Empires 2 Cloze'
 
 class NoteFactory(Factory, metaclass=ABCMeta):
     """
@@ -20,17 +37,9 @@ class NoteFactory(Factory, metaclass=ABCMeta):
     def __init__(self, path):
         super().__init__(path)
 
-        self.init_decks()
         self.init_notetypes()
 
         self.data_key = ''
-
-    def init_decks(self):
-        """
-        Check to see if the aoe2 and techtree decks exist and create if they do not
-        """
-        self.base_deck_id = mw.col.decks.add_normal_deck_with_name(BASE_DECK).id
-        self.techtree_deck_id = mw.col.decks.add_normal_deck_with_name(TECH_TREE_DECK).id
 
     def init_notetypes(self):
         # TODO create the aoe2 notetypes rather than relying on them already existing
@@ -46,6 +55,8 @@ class NoteFactory(Factory, metaclass=ABCMeta):
 
         if self.cloze_model_id is None or self.reg_model_id is None:
             raise Exception("Aoe2 note types can not be found.")
+        
+
     
     def _get_data_object(self, data_id):
         return self.data['data'][f'{self.data_key}s'][str(data_id)]
@@ -57,17 +68,17 @@ class NoteFactory(Factory, metaclass=ABCMeta):
         return self.strings[str(str_id)]
     
     def _get_data_help_str(self, data_id):
-        return self._get_string(self._get_data_object(data_id)[AOE2_LANG_HELP_ID])
+        return self._get_string(self._get_data_object(data_id)[StringsKey.help])
     
     def _get_data_name_str(self, data_id):
-        return self._get_string(self._get_data_object(data_id)[AOE2_LANG_NAME_ID])
+        return self._get_string(self._get_data_object(data_id)[StringsKey.name])
     
     def _update_note_field(self, note, field, value, note_state):
         current_value = note[field]
         if current_value != value:
             note[field] = value
-            if note_state > AOE2_NOTE_STATE_MODIFIED:
-                note_state = AOE2_NOTE_STATE_MODIFIED
+            if note_state > NoteState.modified:
+                note_state = NoteState.modified
         return note_state
     
     def get_notes(self):
@@ -75,14 +86,14 @@ class NoteFactory(Factory, metaclass=ABCMeta):
         updated_notes = []
         for civ in self.civ_names:
             note, note_state = self.get_note_civ(civ)
-            if note_state == AOE2_NOTE_STATE_NEW:
+            if note_state == NoteState.new:
                 new_notes.append(note)
-            elif note_state == AOE2_NOTE_STATE_MODIFIED:
+            elif note_state == NoteState.modified:
                 updated_notes.append(note)
-            elif note_state == AOE2_NOTE_STATE_UNCHANGED:
+            elif note_state == NoteState.unchanged:
                 pass
             else:
-                raise Exception('Undefined behaviour')
+                raise Exception('Undefined behaviour')                
         return new_notes, updated_notes
     
     @abstractmethod
@@ -90,18 +101,19 @@ class NoteFactory(Factory, metaclass=ABCMeta):
         pass
 
     def _get_id_str(self, civ):
-        return ' '.join([AOE2_IMPORT_TAG, self.tag, civ])
+        # TODO hc string
+        return ' '.join(['aoe2importtool', self.tag, civ])
     
     def _get_note(self, civ, model_id):
         note = None
-        note_state = AOE2_NOTE_STATE_UNCHANGED
+        note_state = NoteState.unchanged
         id_str = self._get_id_str(civ)
         nids = mw.col.find_notes(
             mw.col.build_search_string(f'"{id_str}"', collection.SearchNode(field_name=AOE2_ID))
         )
         if len(nids) == 0:
             note = mw.col.new_note(notetype=mw.col.models.get(model_id))
-            note_state = AOE2_NOTE_STATE_NEW
+            note_state = NoteState.new
         elif len(nids) == 1:
             note = mw.col.get_note(nids[0])
         else:
@@ -115,7 +127,8 @@ class NoteFactory(Factory, metaclass=ABCMeta):
         )
 
         # Add tags
-        note.add_tag(AOE2_IMPORT_TAG)
+        # TODO hc string
+        note.add_tag('aoe2importtool')
         note.add_tag(civ)
         note.add_tag(self.tag)
         
@@ -223,7 +236,7 @@ class RegNoteFactory(NoteFactory, metaclass=ABCMeta):
         return ''
 
 
-class TechTreeRegNoteFactory(RegNoteFactory):
+class TechTreeRegNoteFactory(RegNoteFactory, TechTreeDeck):
     def __init__(self,
             ids: list[int],
             question: str,
@@ -231,7 +244,6 @@ class TechTreeRegNoteFactory(RegNoteFactory):
             path: str,
         ):
         super(TechTreeRegNoteFactory, self).__init__(path)
-        self.deck_id = self.techtree_deck_id
         self.ids = ids
         self.question = question
         self.tag = tag
@@ -265,6 +277,14 @@ class TechTreeRegNoteFactory(RegNoteFactory):
                 note_state,
             )
         return note, note_state
+
+
+# class UniqueTechNoteFactory(RegNoteFactory, metaclass=ABCMeta):
+#     def __init__(self, path):
+#         super().__init__(path)
+#         self.deck_id = self.techtree_deck_id
+
+
 
 
 class TechNoteFactory(TechTreeRegNoteFactory):
@@ -386,10 +406,9 @@ class ClozeNoteFactory(NoteFactory, metaclass=ABCMeta):
         return ''
     
     
-class CivBonusNoteFactory(ClozeNoteFactory):
+class CivBonusNoteFactory(ClozeNoteFactory,TechTreeDeck):
     def __init__(self, path: str):
         super().__init__(path)
-        self.deck_id = self.techtree_deck_id
         self.tag = 'civbonus'
 
     def _get_civ_bonuses(self, bonus_str):

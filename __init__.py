@@ -5,9 +5,8 @@ from aqt.utils import showInfo, qconnect
 # import all of the Qt GUI library
 from aqt.qt import *
 
-from .note_factory import *
-from .const import *
-from .notes import *
+from .factory.notes import *
+from .configs import *
 
 from anki.collection import AddNoteRequest
 from aqt.operations import CollectionOp
@@ -29,7 +28,7 @@ def add_notes(factory_class, cfg, col):
         **cfg
     )
     new_notes, updated_notes = factory.get_notes()
-    col.add_notes([AddNoteRequest(note, factory.deck_id) for note in new_notes])
+    col.add_notes([AddNoteRequest(note, factory.get_deck_id()) for note in new_notes])
     col.update_notes(updated_notes)
 
 def aoe2_run(col) -> None:
